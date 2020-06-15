@@ -14,9 +14,9 @@ class CPU:
         self.pc = 0 # Program Counter
         
     def ram_read(self, slot):
-        pass
+        return self.ram[slot]
     def ram_write(self, slot, value):
-        pass
+        self.ram[slot] = value
 
     def load(self):
         """Load a program into memory."""
@@ -77,9 +77,34 @@ class CPU:
         
         running = True
         while running:
-            print('running')
-            if self.ram[self.pc] == HLT:
-                print('halt')
-                running = False
-            self.pc += 1
+            ir = self.ram_read(self.pc)
             
+            # HLT
+            if ir == HLT:
+                running = False
+                
+            # LDI
+            elif ir == LDI:
+                # get the register slot we want to write the value to
+                reg_num = self.ram_read(self.pc+1)
+                # get the value that we want to write to the register
+                value = self.ram_read(self.pc+2) 
+                # set the register at the desired slot to the desired value
+                self.reg[reg_num] = value
+                # increment by 3 since there were 3 instructions total
+                self.pc += 3
+                
+            # PRN
+            elif ir == PRN:
+                # get the register slot we want to print the value of
+                reg_num = self.ram_read(self.pc+1)
+                # get that value by its slot
+                value = self.reg[reg_num]
+                # print!
+                print(value)
+                # increment by 2 since there were 2 instructions total
+                self.pc += 2
+                
+            # UNKNOWN INSTRUCTION
+            else:
+                print(f'Unknown instruction {ir} at address {self.pc}')
