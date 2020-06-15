@@ -11,7 +11,7 @@ class CPU:
         self.ram = [0] * 256
         # 8 registers
         self.reg = [0] * 8
-        self.pc = 0
+        self.pc = 0 # Program Counter
         
     def ram_read(self, slot):
         pass
@@ -71,4 +71,15 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        LDI = 0b10000010 # load value into register
+        PRN = 0b01000111 # print value
+        HLT = 0b00000001 # halt execution
+        
+        running = True
+        while running:
+            print('running')
+            if self.ram[self.pc] == HLT:
+                print('halt')
+                running = False
+            self.pc += 1
+            
