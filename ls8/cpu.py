@@ -6,6 +6,8 @@ LDI = 0b10000010 # load value into register
 PRN = 0b01000111 # print value
 HLT = 0b00000001 # halt execution
 MUL = 0b10100010 # multiply
+PUSH = 0b01000101 # push to stack
+POP = 0b01000110 # pop off stack
 
 class CPU:
     """Main CPU class."""
@@ -16,7 +18,10 @@ class CPU:
         self.ram = [0] * 256
         # 8 registers
         self.reg = [0] * 8
-        self.pc = 0 # Program Counter
+        # Program Counter
+        self.pc = 0 
+        # set register 7 to point to the top of the stack
+        self.reg[7] = 0xf4
         # branch table for instruction set
         self.instruction_set = {}
         # load the branch table
@@ -24,12 +29,14 @@ class CPU:
         self.instruction_set[PRN] = self.PRN
         self.instruction_set[HLT] = self.HLT
         self.instruction_set[MUL] = self.MUL
+        self.instruction_set[PUSH] = self.PUSH
+        self.instruction_set[POP] = self.POP
         self.running = False
         
-    def ram_read(self, slot):
-        return self.ram[slot]
-    def ram_write(self, slot, value):
-        self.ram[slot] = value
+    def ram_read(self, mar):
+        return self.ram[mar]
+    def ram_write(self, mar, mdr):
+        self.ram[mar] = mdr
 
     def load(self):
         """Load a program into memory."""
@@ -115,6 +122,36 @@ class CPU:
         reg_num2 = self.ram_read(self.pc+2)
         # pass them off to the ALU
         self.alu("MUL", reg_num1, reg_num2)
+        
+    def PUSH(self):
+        SP = 7
+        # decrement SP--remember that it stacks going towards the bottom
+        self.reg[SP] -=1
+        
+        # get the value we want to store
+        reg_num = self.ram_read(self.pc+1)
+        # get the value
+        value = self.reg[reg_num]
+        
+        # figure out where to store it
+        top_of_stack_addr = self.reg[SP]
+        
+        # store it
+        self.ram_write(top_of_stack_addr, value)
+        
+    def POP(self):
+        SP = 7
+        # get the address that the SP is pointing to
+        address = self.reg[SP]
+        # get the value of that address from RAM
+        value = self.ram_read(address)
+        # get the number for the given register
+        reg_num = self.ram_read(self.pc+1)
+        # write the value to this register
+        self.reg[reg_num] = value
+        # increment the SP--remember that it stacks going towards the bottom
+        self.reg[SP] +=1
+        
     
     def HLT(self):
         self.running = False
@@ -133,8 +170,12 @@ class CPU:
                 self.instruction_set[ir]()
                 
                 # increment the pc using bitwise and shifting
-                num_operands = (ir & 0b11000000) >> 6
-                pc_move_to = num_operands + 1
+                instruction_length = (ir & 0b11000000) >> 6
+                
+                # pc should be incremented by this much
+                pc_move_to = instruction_length + 1
+                
+                # increment pc
                 self.pc += pc_move_to
                 
             else:
