@@ -10,6 +10,10 @@ PUSH = 0b01000101 # push to stack
 POP = 0b01000110 # pop off stack
 CMP = 0b10100111 # compare two registers
 JMP = 0b01010100 # jump to address
+      # AABCDDDD
+JEQ = 0b01010101 # jump if equal
+JNE = 0b01010110 # jump if not equal
+CALL = 0b01010000 # call a subroutine
 
 class CPU:
     """Main CPU class."""
@@ -37,6 +41,9 @@ class CPU:
         self.instruction_set[POP] = self.POP
         self.instruction_set[CMP] = self.CMP
         self.instruction_set[JMP] = self.JMP
+        self.instruction_set[JEQ] = self.JEQ
+        self.instruction_set[JNE] = self.JNE
+        self.instruction_set[CALL] = self.CALL
         self.running = False
         
     def ram_read(self, mar):
@@ -93,7 +100,6 @@ class CPU:
                 self.fl = 0b00000010
             else: # val_a is less
                 self.fl = 0b00000100
-        
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -186,6 +192,39 @@ class CPU:
         # jump the PC to this address
         self.pc = address_to_jump_to
         
+        # return true to indicate that we ARE jumping.
+        # Useful for conditional jumps
+        return True
+        
+    def JEQ(self):
+        if self.fl == 0b00000001:
+            # the equal flag is set to 1 (true)
+            return self.JMP()
+            
+        
+    def JNE(self):
+        if self.fl != 0b00000001:
+            # the equal flag is set to 0 (false)
+            return self.JMP()
+        
+    def CALL(self):
+        # get the return address
+        return_addr = self.pc+2 # this command has one parameter, so increment by 2
+        
+        # push the return address onto the stack
+        SP = 7
+        # decrement SP--remember that it stacks going towards the bottom
+        self.reg[SP] -=1
+        # write to the stack with the return address
+        self.ram_write(self.reg[SP], return_addr)
+        
+        # now, get the address that we want to call (move pc to)
+        reg_num = self.ram_read(self.pc+1)
+        subroutine_addr = self.reg[reg_num]
+        
+        # call the subroutine
+        self.pc = subroutine_addr
+        
     
     def HLT(self):
         self.running = False
@@ -197,11 +236,15 @@ class CPU:
         while self.running:
             ir = self.ram_read(self.pc)
             
+            #self.trace()
+            
             # if the instruction exists in the instruction set,
             if ir in self.instruction_set:
                 
                 # do the instruction
-                self.instruction_set[ir]()
+                # if jumping is true, it means this is a comparison
+                # op (JEQ, JGE, JGT, etc.) and it WILL be jumping
+                jumping = self.instruction_set[ir]()
                 
                 # whether the instruction increments the PC itself or not
                 sets_pc = (ir & 0b00010000) >> 4
@@ -209,8 +252,10 @@ class CPU:
                 instruction_length = (ir & 0b11000000) >> 6
                 
                 # if the instruction does not increment the PC itself,
-                # manually increment it
-                if not sets_pc:
+                # manually increment it. Additionally, if we are in an
+                # instruction that increments conditionally, 'jumping'
+                # will determine if it jumps
+                if sets_pc == 0 or (sets_pc == 1 and not jumping):
                     # pc should be incremented by this much
                     pc_move_to = instruction_length + 1
                     
