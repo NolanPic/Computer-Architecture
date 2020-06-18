@@ -9,6 +9,7 @@ MUL = 0b10100010 # multiply
 PUSH = 0b01000101 # push to stack
 POP = 0b01000110 # pop off stack
 CMP = 0b10100111 # compare two registers
+JMP = 0b01010100 # jump to address
 
 class CPU:
     """Main CPU class."""
@@ -35,6 +36,7 @@ class CPU:
         self.instruction_set[PUSH] = self.PUSH
         self.instruction_set[POP] = self.POP
         self.instruction_set[CMP] = self.CMP
+        self.instruction_set[JMP] = self.JMP
         self.running = False
         
     def ram_read(self, mar):
@@ -177,6 +179,13 @@ class CPU:
         # pass to the ALU
         self.alu("CMP", reg_a, reg_b)
         
+    def JMP(self):
+        # get the register value to jump to
+        reg_num = self.ram_read(self.pc+1)
+        address_to_jump_to = self.reg[reg_num]
+        # jump the PC to this address
+        self.pc = address_to_jump_to
+        
     
     def HLT(self):
         self.running = False
@@ -194,14 +203,19 @@ class CPU:
                 # do the instruction
                 self.instruction_set[ir]()
                 
+                # whether the instruction increments the PC itself or not
+                sets_pc = (ir & 0b00010000) >> 4
                 # increment the pc using bitwise and shifting
                 instruction_length = (ir & 0b11000000) >> 6
                 
-                # pc should be incremented by this much
-                pc_move_to = instruction_length + 1
-                
-                # increment pc
-                self.pc += pc_move_to
+                # if the instruction does not increment the PC itself,
+                # manually increment it
+                if not sets_pc:
+                    # pc should be incremented by this much
+                    pc_move_to = instruction_length + 1
+                    
+                    # increment pc
+                    self.pc += pc_move_to
                 
             else:
                 print(f'Unknown instruction {ir} at address {self.pc}')

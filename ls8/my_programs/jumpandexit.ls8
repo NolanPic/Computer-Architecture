@@ -1,0 +1,25 @@
+# print a value, jump over another print, 
+# and print a last value before exiting
+10000010 # LDI R0,1
+00000000
+00000001
+01000111 # PRN R0
+00000000
+# skip printing 2 and go right to 3
+10000010 # LDI R1,15 <-- 15 is the address we want to jump to
+00000001
+00001111
+01010100 # JMP R1 <-- jump to the address at R1, which is 15
+00000001
+10000010 # LDI R0,2
+00000000
+00000010
+01000111 # PRN R0
+00000000
+# address 15
+10000010 # LDI R0,3
+00000000
+00000011
+01000111 # PRN R0
+00000000
+00000001 # HLT
