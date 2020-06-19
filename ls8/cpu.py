@@ -5,15 +5,19 @@ import sys
 LDI = 0b10000010 # load value into register
 PRN = 0b01000111 # print value
 HLT = 0b00000001 # halt execution
-MUL = 0b10100010 # multiply
+MUL = 0b10100010 # multiplication
+ADD = 0b10100000 # addition
 PUSH = 0b01000101 # push to stack
 POP = 0b01000110 # pop off stack
 CMP = 0b10100111 # compare two registers
 JMP = 0b01010100 # jump to address
       # AABCDDDD
 JEQ = 0b01010101 # jump if equal
+      # AABCDDDD
 JNE = 0b01010110 # jump if not equal
 CALL = 0b01010000 # call a subroutine
+      # AABCDDDD
+RET = 0b00010001 # return from a subroutine
 
 class CPU:
     """Main CPU class."""
@@ -37,6 +41,7 @@ class CPU:
         self.instruction_set[PRN] = self.PRN
         self.instruction_set[HLT] = self.HLT
         self.instruction_set[MUL] = self.MUL
+        self.instruction_set[ADD] = self.ADD
         self.instruction_set[PUSH] = self.PUSH
         self.instruction_set[POP] = self.POP
         self.instruction_set[CMP] = self.CMP
@@ -44,6 +49,7 @@ class CPU:
         self.instruction_set[JEQ] = self.JEQ
         self.instruction_set[JNE] = self.JNE
         self.instruction_set[CALL] = self.CALL
+        self.instruction_set[RET] = self.RET
         self.running = False
         
     def ram_read(self, mar):
@@ -108,9 +114,8 @@ class CPU:
         Handy function to print out the CPU state. You might want to call this
         from run() if you need help debugging.
         """
-
-        print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
+        print(f"TRACE: {self.pc}", end='')
+        print(f" | %02X %02X %02X |" % (
             #self.fl,
             #self.ie,
             self.ram_read(self.pc),
@@ -146,6 +151,14 @@ class CPU:
         reg_num2 = self.ram_read(self.pc+2)
         # pass them off to the ALU
         self.alu("MUL", reg_num1, reg_num2)
+        
+    def ADD(self):
+        # get the register slot of the first number
+        reg_num1 = self.ram_read(self.pc+1)
+        # get the register slot of the second number
+        reg_num2 = self.ram_read(self.pc+2)
+        # pass them off to the ALU
+        self.alu("ADD", reg_num1, reg_num2)
         
     def PUSH(self):
         SP = 7
@@ -199,13 +212,15 @@ class CPU:
     def JEQ(self):
         if self.fl == 0b00000001:
             # the equal flag is set to 1 (true)
-            return self.JMP()
+            self.JMP()
+            return True
             
         
     def JNE(self):
         if self.fl != 0b00000001:
             # the equal flag is set to 0 (false)
-            return self.JMP()
+            self.JMP()
+            return True
         
     def CALL(self):
         # get the return address
@@ -224,6 +239,25 @@ class CPU:
         
         # call the subroutine
         self.pc = subroutine_addr
+        
+        # This has to return true because we are moving--not ideal, but necessary for now
+        return True
+        
+    def RET(self):
+        SP = 7
+        # get the address that the SP is pointing to
+        address = self.reg[SP]
+        #print(bin(address))
+        # get the value of that address from RAM
+        return_addr = self.ram_read(address)
+        
+        # set the PC to the return address
+        self.pc = return_addr
+        # increment the SP--remember that it stacks going towards the bottom
+        self.reg[SP] +=1
+        
+        return True
+        
         
     
     def HLT(self):
@@ -255,12 +289,12 @@ class CPU:
                 # manually increment it. Additionally, if we are in an
                 # instruction that increments conditionally, 'jumping'
                 # will determine if it jumps
-                if sets_pc == 0 or (sets_pc == 1 and not jumping):
+                if (sets_pc == 0) or (sets_pc == 1 and not jumping):
                     # pc should be incremented by this much
                     pc_move_to = instruction_length + 1
-                    
                     # increment pc
                     self.pc += pc_move_to
+                    
                 
             else:
                 print(f'Unknown instruction {ir} at address {self.pc}')
