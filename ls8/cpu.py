@@ -20,6 +20,8 @@ OR = 0b10101010 # bitwise-OR
 XOR = 0b10101011 # bitwise-XOR
 NOT = 0b01101001 # bitwise-NOT
 MOD = 0b10100100 # get the remainder
+SHL = 0b10101100 # shift left
+SHR = 0b10101101 # shift right
 class CPU:
     """Main CPU class."""
 
@@ -56,6 +58,8 @@ class CPU:
         self.instruction_set[XOR] = self.XOR
         self.instruction_set[NOT] = self.NOT
         self.instruction_set[MOD] = self.MOD
+        self.instruction_set[SHL] = self.SHL
+        self.instruction_set[SHR] = self.SHR
         self.running = False
         
     def ram_read(self, mar):
@@ -115,6 +119,10 @@ class CPU:
                 sys.exit(1)
             # else, we're good
             self.reg[reg_a] = self.reg[reg_a] % self.reg[reg_b]
+        elif op == "SHL":
+            self.reg[reg_a] = self.reg[reg_a] << self.reg[reg_b]
+        elif op == "SHR":
+            self.reg[reg_a] = self.reg[reg_a] >> self.reg[reg_b]
         elif op == "CMP":
             # 00000LGE less,greater,equal
             # get the values
@@ -316,6 +324,22 @@ class CPU:
         reg_num2 = self.ram_read(self.pc+2)
         # pass them off to the ALU
         self.alu("MOD", reg_num1, reg_num2)
+        
+    def SHL(self):
+        # get the register slot of the first number
+        reg_num1 = self.ram_read(self.pc+1)
+        # get the register slot of the second number
+        reg_num2 = self.ram_read(self.pc+2)
+        # pass them off to the ALU
+        self.alu("SHL", reg_num1, reg_num2)
+    
+    def SHR(self):
+        # get the register slot of the first number
+        reg_num1 = self.ram_read(self.pc+1)
+        # get the register slot of the second number
+        reg_num2 = self.ram_read(self.pc+2)
+        # pass them off to the ALU
+        self.alu("SHR", reg_num1, reg_num2)
         
     
     def HLT(self):
