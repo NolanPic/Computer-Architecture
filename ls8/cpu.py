@@ -16,6 +16,8 @@ JNE = 0b01010110 # jump if not equal
 CALL = 0b01010000 # call a subroutine
 RET = 0b00010001 # return from a subroutine
 AND = 0b10101000 # bitwise-AND
+OR = 0b10101010 # bitwise-OR
+XOR = 0b10101011 # bitwise-XOR
 
 class CPU:
     """Main CPU class."""
@@ -49,6 +51,8 @@ class CPU:
         self.instruction_set[CALL] = self.CALL
         self.instruction_set[RET] = self.RET
         self.instruction_set[AND] = self.AND
+        self.instruction_set[OR] = self.OR
+        self.instruction_set[XOR] = self.XOR
         self.running = False
         
     def ram_read(self, mar):
@@ -95,6 +99,10 @@ class CPU:
             self.reg[reg_a] /= self.reg[reg_b]
         elif op == "AND":
             self.reg[reg_a] = self.reg[reg_a] & self.reg[reg_b]
+        elif op == "OR":
+            self.reg[reg_a] = self.reg[reg_a] | self.reg[reg_b]
+        elif op == "XOR":
+            self.reg[reg_a] = self.reg[reg_a] ^ self.reg[reg_b]
         elif op == "CMP":
             # 00000LGE less,greater,equal
             # get the values
@@ -266,6 +274,22 @@ class CPU:
         reg_num2 = self.ram_read(self.pc+2)
         # pass them off to the ALU
         self.alu("AND", reg_num1, reg_num2)
+        
+    def OR(self):
+        # get the register slot of the first number
+        reg_num1 = self.ram_read(self.pc+1)
+        # get the register slot of the second number
+        reg_num2 = self.ram_read(self.pc+2)
+        # pass them off to the ALU
+        self.alu("OR", reg_num1, reg_num2)
+        
+    def XOR(self):
+        # get the register slot of the first number
+        reg_num1 = self.ram_read(self.pc+1)
+        # get the register slot of the second number
+        reg_num2 = self.ram_read(self.pc+2)
+        # pass them off to the ALU
+        self.alu("XOR", reg_num1, reg_num2)
         
     
     def HLT(self):
