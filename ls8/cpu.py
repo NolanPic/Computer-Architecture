@@ -29,16 +29,22 @@ class CPU:
         """Construct a new CPU."""
         
         self.ram = [0] * 256
+        
         # 8 registers
         self.reg = [0] * 8
+        
         # Program Counter
         self.pc = 0 
+        
         # set the fl: 00000LGE less,greater,equal
         self.fl = 0b00000000
+        
         # set register 7 to point to the top of the stack
         self.reg[7] = 0xf4
+        
         # branch table for instruction set
         self.instruction_set = {}
+        
         # load the branch table
         self.instruction_set[LDI] = self.LDI
         self.instruction_set[PRN] = self.PRN
@@ -64,6 +70,7 @@ class CPU:
         
     def ram_read(self, mar):
         return self.ram[mar]
+    
     def ram_write(self, mar, mdr):
         self.ram[mar] = mdr
 
