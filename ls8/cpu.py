@@ -244,7 +244,6 @@ class CPU:
             self.JMP()
             return True
             
-        
     def JNE(self):
         if self.fl != 0b00000001:
             # the equal flag is set to 0 (false)
@@ -341,7 +340,6 @@ class CPU:
         # pass them off to the ALU
         self.alu("SHR", reg_num1, reg_num2)
         
-    
     def HLT(self):
         self.running = False
 
@@ -351,8 +349,6 @@ class CPU:
         self.running = True
         while self.running:
             ir = self.ram_read(self.pc)
-            
-            #self.trace()
             
             # if the instruction exists in the instruction set,
             if ir in self.instruction_set:
@@ -377,7 +373,6 @@ class CPU:
                     # increment pc
                     self.pc += pc_move_to
                     
-                
             else:
                 print(f'Unknown instruction {ir} at address {self.pc}')
                 sys.exit(1)
