@@ -1,7 +1,7 @@
 """CPU functionality."""
 
 import sys
-
+      # AABCDDDD
 LDI = 0b10000010 # load value into register
 PRN = 0b01000111 # print value
 HLT = 0b00000001 # halt execution
@@ -11,13 +11,11 @@ PUSH = 0b01000101 # push to stack
 POP = 0b01000110 # pop off stack
 CMP = 0b10100111 # compare two registers
 JMP = 0b01010100 # jump to address
-      # AABCDDDD
 JEQ = 0b01010101 # jump if equal
-      # AABCDDDD
 JNE = 0b01010110 # jump if not equal
 CALL = 0b01010000 # call a subroutine
-      # AABCDDDD
 RET = 0b00010001 # return from a subroutine
+AND = 0b10101000 # bitwise-AND
 
 class CPU:
     """Main CPU class."""
@@ -50,6 +48,7 @@ class CPU:
         self.instruction_set[JNE] = self.JNE
         self.instruction_set[CALL] = self.CALL
         self.instruction_set[RET] = self.RET
+        self.instruction_set[AND] = self.AND
         self.running = False
         
     def ram_read(self, mar):
@@ -94,6 +93,8 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
+        elif op == "AND":
+            self.reg[reg_a] = self.reg[reg_a] & self.reg[reg_b]
         elif op == "CMP":
             # 00000LGE less,greater,equal
             # get the values
@@ -257,7 +258,14 @@ class CPU:
         self.reg[SP] +=1
         
         return True
-        
+    
+    def AND(self):
+        # get the register slot of the first number
+        reg_num1 = self.ram_read(self.pc+1)
+        # get the register slot of the second number
+        reg_num2 = self.ram_read(self.pc+2)
+        # pass them off to the ALU
+        self.alu("AND", reg_num1, reg_num2)
         
     
     def HLT(self):
